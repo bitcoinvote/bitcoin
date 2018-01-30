@@ -34,6 +34,7 @@
 
 #include <mutex>
 #include <condition_variable>
+#include <btv_const.h>
 
 struct CUpdatedBlock
 {
@@ -57,17 +58,19 @@ double GetDifficulty(const CBlockIndex* blockindex)
             blockindex = chainActive.Tip();
     }
 
+    if (blockindex->nHeight >= BTV_BRANCH_HEIGHT && blockindex->nHeight <= BTV_BRANCH_HEIGHT_WINDOW) return 1.0;
     int nShift = (blockindex->nBits >> 24) & 0xff;
 
     double dDiff =
         (double)0x0000ffff / (double)(blockindex->nBits & 0x00ffffff);
 
-    while (nShift < 29)
+    int nThreshold = (blockindex->nHeight >= BTV_BRANCH_HEIGHT) ? 31 : 29;
+    while (nShift < nThreshold)
     {
         dDiff *= 256.0;
         nShift++;
     }
-    while (nShift > 29)
+    while (nShift > nThreshold)
     {
         dDiff /= 256.0;
         nShift--;
