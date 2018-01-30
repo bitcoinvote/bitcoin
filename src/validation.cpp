@@ -4372,7 +4372,7 @@ void CChainState::CheckBlockIndex(const Consensus::Params& consensusParams)
         if (pindex->pprev != nullptr && pindexFirstNotChainValid == nullptr && (pindex->nStatus & BLOCK_VALID_MASK) < BLOCK_VALID_CHAIN) pindexFirstNotChainValid = pindex;
         if (pindex->pprev != nullptr && pindexFirstNotScriptsValid == nullptr && (pindex->nStatus & BLOCK_VALID_MASK) < BLOCK_VALID_SCRIPTS) pindexFirstNotScriptsValid = pindex;
 
-        assert((pindex->nHeight >= BTV_BRANCH_HEIGHT) && pindex->IsBtvBranched());
+        //assert((pindex->nHeight >= BTV_BRANCH_HEIGHT) && pindex->IsBtvBranched());
 
         // Begin: actual consistency checks.
         if (pindex->pprev == nullptr) {
