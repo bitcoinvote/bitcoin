@@ -88,6 +88,7 @@ BITCOIN_CORE_H = \
   checkpoints.h \
   checkqueue.h \
   clientversion.h \
+  cnhashmap.h \
   coins.h \
   compat.h \
   compat/byteswap.h \
@@ -192,6 +193,7 @@ libbitcoin_server_a_SOURCES = \
   blockencodings.cpp \
   chain.cpp \
   checkpoints.cpp \
+  cnhashmap.cpp \
   consensus/tx_verify.cpp \
   httprpc.cpp \
   httpserver.cpp \
@@ -286,6 +288,8 @@ libbitcoin_consensus_a_SOURCES = \
   amount.h \
   arith_uint256.cpp \
   arith_uint256.h \
+  cnhashmap.cpp \
+  cnhashmap.h \
   consensus/merkle.cpp \
   consensus/merkle.h \
   consensus/params.h \

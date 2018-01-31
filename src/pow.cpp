@@ -11,12 +11,13 @@
 #include <uint256.h>
 
 #include <btv_const.h>
+#include <cnhashmap.h>
 
 unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params)
 {
     assert(pindexLast != nullptr);
     int nCurrentHeight = pindexLast->nHeight + 1;
-    unsigned int nProofOfWorkLimit = (nCurrentHeight >= BTV_BRANCH_HEIGHT) ? UintToArith256(uint256S(BTV_BRANCH_POW_LIMIT)).GetCompact() : UintToArith256(params.powLimit).GetCompact();
+    unsigned int nProofOfWorkLimit = (nCurrentHeight >= BTV_BRANCH_HEIGHT) ? UintToArith256(params.btvPowLimit).GetCompact() : UintToArith256(params.powLimit).GetCompact();
 
     if ((nCurrentHeight >= BTV_BRANCH_HEIGHT) && (nCurrentHeight <= BTV_BRANCH_HEIGHT_WINDOW)) return nProofOfWorkLimit;
     if (params.fPowNoRetargeting) return pindexLast->nBits;
@@ -68,7 +69,7 @@ unsigned int CalculateNextWorkRequired(const CBlockIndex* pindexLast, int64_t nF
         nActualTimespan = nPowTargetTimespan*4;
 
     // Retarget
-    const arith_uint256 bnPowLimit = ((pindexLast->nHeight + 1) >= BTV_BRANCH_HEIGHT) ? UintToArith256(uint256S(BTV_BRANCH_POW_LIMIT)) : UintToArith256(params.powLimit);
+    const arith_uint256 bnPowLimit = ((pindexLast->nHeight + 1) >= BTV_BRANCH_HEIGHT) ? UintToArith256(params.btvPowLimit) : UintToArith256(params.powLimit);
     arith_uint256 bnNew;
     bnNew.SetCompact(pindexLast->nBits);
     bnNew *= nActualTimespan;
@@ -80,7 +81,7 @@ unsigned int CalculateNextWorkRequired(const CBlockIndex* pindexLast, int64_t nF
     return bnNew.GetCompact();
 }
 
-bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params& params, bool bBranched)
+bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params& params, bool bBranched, uint256 hashSha256)
 {
     bool fNegative;
     bool fOverflow;
@@ -88,7 +89,7 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
 
     bnTarget.SetCompact(nBits, &fNegative, &fOverflow);
 
-    const arith_uint256 bnPowLimit = bBranched ? UintToArith256(uint256S(BTV_BRANCH_POW_LIMIT)) : UintToArith256(params.powLimit);
+    const arith_uint256 bnPowLimit = bBranched ? UintToArith256(params.btvPowLimit) : UintToArith256(params.powLimit);
     // Check range
     if (fNegative || bnTarget == 0 || fOverflow || bnTarget > bnPowLimit)
         return false;
@@ -97,5 +98,6 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
     if (UintToArith256(hash) > bnTarget)
         return false;
 
+    if (bBranched) writeHash(hashSha256, hash);
     return true;
 }

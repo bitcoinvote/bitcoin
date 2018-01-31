@@ -12,16 +12,20 @@
 
 #include <btv_const.h>
 #include <crypto/cryptonight.h>
+#include <cnhashmap.h>
 
 uint256 CBlockHeader::GetHash() const
 {
-    uint256 ret;
+    uint256 ret = SerializeHash(*this);
     if (!IsBtvBranched()) // before branch
     {
-        return SerializeHash(*this);
+        return ret;
     }
     else
     {
+        uint256 result;
+        if (getHash(ret, result)) return result;
+
         char data[32];
         memset(data, 0, 32);
         cryptonight_hash(data, (const void*)this, 80);
@@ -32,9 +36,14 @@ uint256 CBlockHeader::GetHash() const
             vch.push_back((unsigned char) data[i]);
         }
 
-		uint256 result(vch);
-		return result;
+		uint256 hashCn(vch);
+		return hashCn;
     }
+}
+
+uint256 CBlockHeader::GetHashSha256() const
+{
+    return SerializeHash(*this);
 }
 
 std::string CBlock::ToString() const
