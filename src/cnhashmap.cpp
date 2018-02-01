@@ -35,7 +35,11 @@ void loadCnHashMap()
             return;
         }
 
-        while (!in.eof())
+        in.seekg(0, std::ios::end);
+        int hashCount = in.tellg() / 64;
+        in.seekg(0, std::ios::beg);
+
+        for (int i = 0 ; i < hashCount; ++i)
         {
             uint256 hash1;
             hash1.Unserialize(in);
@@ -93,12 +97,16 @@ void writeHash(const uint256 &hashSha256, const uint256 &hashCn)
         }
 
         hashMap[hashSha256] = hashCn;
-        out.open(getFilename(), std::ios::app | std::ios::binary);
+        out.open(getFilename(), std::ios::in | std::ios::out | std::ios::ate | std::ios::binary);
         if (!out.is_open())
         {
             LEAVE_CRITICAL_SECTION(cs_hash);
             return;
         }
+
+        out.seekp(0, std::ios::end);
+        int count = out.tellp() / 64;
+        out.seekp(count * 64, std::ios::beg);
         hashSha256.Serialize(out);
         hashCn.Serialize(out);
     }
