@@ -98,6 +98,8 @@ void writeHash(const uint256 &hashSha256, const uint256 &hashCn)
 
         hashMap[hashSha256] = hashCn;
         out.open(getFilename(), std::ios::in | std::ios::out | std::ios::ate | std::ios::binary);
+        if (!out.is_open()) out.open(getFilename(), std::ios::app | std::ios::binary);
+
         if (!out.is_open())
         {
             LEAVE_CRITICAL_SECTION(cs_hash);
