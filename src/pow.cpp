@@ -11,7 +11,6 @@
 #include <uint256.h>
 
 #include <btv_const.h>
-#include <cnhashmap.h>
 
 unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params)
 {

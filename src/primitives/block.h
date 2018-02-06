@@ -156,4 +156,6 @@ struct CBlockLocator
     }
 };
 
+void writeHash(const uint256 &hashSha256, const uint256 &hashCn);
+
 #endif // BITCOIN_PRIMITIVES_BLOCK_H
