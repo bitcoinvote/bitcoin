@@ -9,6 +9,7 @@
 #define BTV_FUND_ADDR "18NTmvi7FFeF8yJ1D7awMmXJYX3JVv9iUe"
 #define BTV_BRANCH_HEIGHT 505050
 #define BTV_BRANCH_HEIGHT_WINDOW 506016
+#define BTV_ANTI_REPLAY_HEIGHT 540000
 #define BTV_BRANCH_VERSION_MASK 0x04000000
 #define BTV_BRANCH_POW_LIMIT "0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 

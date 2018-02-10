@@ -453,6 +453,23 @@ static bool IsCurrentForFeeEstimation()
     return true;
 }
 
+bool static IsBTVHardForkEnabled(int nHeight) {
+    return nHeight >= BTV_ANTI_REPLAY_HEIGHT;
+}
+
+bool IsBTVHardForkEnabled(const CBlockIndex *pindexPrev) {
+    if (pindexPrev == nullptr) {
+        return false;
+    }
+
+    return IsBTVHardForkEnabled(pindexPrev->nHeight);
+}
+
+bool IsBTVHardForkEnabledForCurrentBlock() {
+    AssertLockHeld(cs_main);
+    return IsBTVHardForkEnabled(chainActive.Tip());
+}
+
 /* Make mempool consistent after a reorg, by re-adding or recursively erasing
  * disconnected block transactions from the mempool, and also removing any
  * other transactions from the mempool that are no longer valid given the new
@@ -1758,9 +1775,10 @@ static unsigned int GetBlockScriptFlags(const CBlockIndex* pindex, const Consens
     }
 
     // After btv branch we start accepting replay protected txns
-    if (pindex->nHeight >= BTV_BRANCH_HEIGHT) { 
-        flags |= SCRIPT_VERIFY_STRICTENC; 
-        flags |= SCRIPT_ENABLE_SIGHASH_FORKID; 
+    if (IsBTVHardForkEnabled(pindex->pprev)) {
+        flags |= SCRIPT_VERIFY_STRICTENC;
+    } else {
+        flags |= SCRIPT_ALLOW_NON_FORKID;
     }
 
     return flags;

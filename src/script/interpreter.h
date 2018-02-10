@@ -24,9 +24,17 @@ enum
     SIGHASH_ALL = 1,
     SIGHASH_NONE = 2,
     SIGHASH_SINGLE = 3,
-    SIGHASH_FORKID = 0x64,
+    SIGHASH_FORKID  = 0x40,
     SIGHASH_ANYONECANPAY = 0x80,
 };
+
+enum
+{
+    FORKID_BCC = 0,
+    FORKID_BTV = 50, // Atomic number AU
+};
+
+static const int FORKID_IN_USE = FORKID_BTV;
 
 /** Script verification flags.
  *
@@ -115,7 +123,7 @@ enum
 
     // Do we accept signature using SIGHASH_FORKID 
     //
-    SCRIPT_ENABLE_SIGHASH_FORKID = (1U << 16)
+    SCRIPT_ALLOW_NON_FORKID = (1U << 17),
 };
 
 bool CheckSignatureEncoding(const std::vector<unsigned char> &vchSig, unsigned int flags, ScriptError* serror);
@@ -134,7 +142,7 @@ enum SigVersion
     SIGVERSION_WITNESS_V0 = 1,
 };
 
-uint256 SignatureHash(const CScript &scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType, const CAmount& amount, SigVersion sigversion, const PrecomputedTransactionData* cache = nullptr);
+uint256 SignatureHash(const CScript &scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType, const CAmount& amount, SigVersion sigversion, const PrecomputedTransactionData* cache = nullptr, const int forkid = FORKID_IN_USE);
 
 class BaseSignatureChecker
 {
