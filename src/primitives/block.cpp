@@ -141,7 +141,10 @@ uint256 CBlockHeader::GetHash() const
     else
     {
         uint256 result;
-        if (getHash(ret, result)) return result;
+        if (getHash(ret, result))
+		{
+			return result;
+		}
 
         char data[32];
         memset(data, 0, 32);
