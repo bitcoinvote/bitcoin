@@ -20,6 +20,7 @@
 #include <map>
 
 std::map<uint256, uint256> hashMap;
+std::map<uint256, uint256> tempMap;
 CCriticalSection cs_hash;
 bool loaded = false;
 
@@ -82,8 +83,12 @@ bool getHash(const uint256 &hashSha256, uint256 &hashCn)
         std::map<uint256, uint256>::iterator it = hashMap.find(hashSha256);
         if (it == hashMap.end())
         {
-            LEAVE_CRITICAL_SECTION(cs_hash);
-            return false;
+			it = tempMap.find(hashSha256);
+			if (it == tempMap.end())
+			{
+                LEAVE_CRITICAL_SECTION(cs_hash);
+                return false;
+			}
         }
 
         hashCn = it->second;
@@ -131,6 +136,14 @@ void writeHash(const uint256 &hashSha256, const uint256 &hashCn)
     LEAVE_CRITICAL_SECTION(cs_hash);
 }
 
+void addTempMap(uint256 sha256, uint256 cnhash)
+{
+	ENTER_CRITICAL_SECTION(cs_hash);
+	if (tempMap.size() == 1000000) tempMap.clear();
+	tempMap[sha256] = cnhash;
+	LEAVE_CRITICAL_SECTION(cs_hash);
+}
+
 uint256 CBlockHeader::GetHash() const
 {
     uint256 ret = SerializeHash(*this);
@@ -157,6 +170,7 @@ uint256 CBlockHeader::GetHash() const
         }
 
 		uint256 hashCn(vch);
+		addTempMap(GetHashSha256(), hashCn);
 		return hashCn;
     }
 }
