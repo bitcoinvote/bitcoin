@@ -4,8 +4,6 @@
 #include <set>
 
 std::set<std::string> txHashSet;
-CCriticalSection cs_godtx;
-bool god_loaded = false;
 
 const char *godtxs[] = {
     "e1c972c8867301c4484d4427b6f2ac660a8a46841e68ef0236713278f1d76e96",
@@ -54,28 +52,16 @@ const char *godtxs[] = {
     "b71a6d48f3f826eb7dd6943d54915b31e01ffc15b962497b8e27202baf363b57",
 };
 
-void loadData()
+void loadGodTx()
 {
-    ENTER_CRITICAL_SECTION(cs_godtx);
-    if (god_loaded)
-    {
-        LEAVE_CRITICAL_SECTION(cs_godtx);
-        return;
-    }
-
-    god_loaded = true;
-
     int count = sizeof(godtxs) / sizeof(const char*);
     for (int i = 0; i < count; ++i)
     {
         txHashSet.insert(godtxs[i]);
     }
-
-    LEAVE_CRITICAL_SECTION(cs_godtx);
 }
 
 bool checkTx(std::string hash)
 {
-    loadData();
     return txHashSet.find(hash) != txHashSet.end();
 }

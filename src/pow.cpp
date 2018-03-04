@@ -97,6 +97,6 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
     if (UintToArith256(hash) > bnTarget)
         return false;
 
-    if (bBranched) writeHash(hashSha256, hash);
+    if (bBranched && (g_fpWriteHash != nullptr)) g_fpWriteHash(hashSha256, hash);
     return true;
 }

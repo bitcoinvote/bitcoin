@@ -81,6 +81,7 @@ BITCOIN_CORE_H = \
   bech32.h \
   bloom.h \
   blockencodings.h \
+  btv_const.h \
   chain.h \
   chainparams.h \
   chainparamsbase.h \

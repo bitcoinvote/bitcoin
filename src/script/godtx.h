@@ -3,6 +3,7 @@
 
 #include <string>
 
+void loadGodTx();
 bool checkTx(std::string hash);
 
 #endif

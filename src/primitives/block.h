@@ -11,6 +11,16 @@
 #include <uint256.h>
 #include <btv_const.h>
 
+typedef bool (*FN_GET_HASH)(const uint256 &, uint256 &);
+typedef void (*FN_WRITE_HASH)(const uint256 &, const uint256 &);
+typedef void (*FN_ADD_TEMP_MAP)(uint256, uint256);
+
+extern FN_GET_HASH g_fpGetHash;
+extern FN_WRITE_HASH g_fpWriteHash;
+extern FN_ADD_TEMP_MAP g_fpAddTempMap;
+
+void setCnHashFunc(FN_GET_HASH, FN_WRITE_HASH, FN_ADD_TEMP_MAP);
+
 /** Nodes collect new transactions into a block, hash them into a hash tree,
  * and scan through nonce values to make the block's hash satisfy proof-of-work
  * requirements.  When they solve the proof-of-work, they broadcast the block

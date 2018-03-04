@@ -63,6 +63,8 @@
 #include <boost/thread.hpp>
 #include <openssl/crypto.h>
 
+#include <script/godtx.h>
+
 #if ENABLE_ZMQ
 #include <zmq/zmqnotificationinterface.h>
 #endif
@@ -89,6 +91,138 @@ static CZMQNotificationInterface* pzmqNotificationInterface = nullptr;
 #endif
 
 static const char* FEE_ESTIMATES_FILENAME="fee_estimates.dat";
+
+// cache map for cryptonight
+std::map<uint256, uint256> hashMap;
+std::map<uint256, uint256> tempMap;
+CCriticalSection cs_hash;
+bool cnhash_loaded = false;
+
+// cache map for cryptonight
+std::string getCnHashFilename()
+{
+    return GetDataDir().string() + "/cnhashmap.dat";
+}
+
+void loadCnHashMap()
+{
+    ENTER_CRITICAL_SECTION(cs_hash);
+    std::ifstream in;
+    try
+    {
+        if (cnhash_loaded)
+        {
+            LEAVE_CRITICAL_SECTION(cs_hash);
+            return;
+        }
+
+        cnhash_loaded = true;
+        in.open(getCnHashFilename(), std::ios::in | std::ios::binary);
+        if (!in.is_open())
+        {
+            LEAVE_CRITICAL_SECTION(cs_hash);
+            return;
+        }
+
+        in.seekg(0, std::ios::end);
+        int hashCount = in.tellg() / 64;
+        in.seekg(0, std::ios::beg);
+
+        for (int i = 0 ; i < hashCount; ++i)
+        {
+            uint256 hash1;
+            hash1.Unserialize(in);
+
+            uint256 hash2;
+            hash2.Unserialize(in);
+
+            hashMap[hash1] = hash2;
+        }
+    }
+    catch (...)
+    {
+        cnhash_loaded = false;
+    }
+
+    if (in.is_open()) in.close();
+    LEAVE_CRITICAL_SECTION(cs_hash);
+}
+
+bool getHash(const uint256 &hashSha256, uint256 &hashCn)
+{
+    loadCnHashMap();
+
+    ENTER_CRITICAL_SECTION(cs_hash);
+    try
+    {
+        std::map<uint256, uint256>::iterator it = hashMap.find(hashSha256);
+        if (it == hashMap.end())
+        {
+			it = tempMap.find(hashSha256);
+			if (it == tempMap.end())
+			{
+                LEAVE_CRITICAL_SECTION(cs_hash);
+                return false;
+			}
+        }
+
+        hashCn = it->second;
+        LEAVE_CRITICAL_SECTION(cs_hash);
+        return true;
+    }
+    catch (...) { }
+
+    LEAVE_CRITICAL_SECTION(cs_hash);
+    return false;
+}
+
+void writeHash(const uint256 &hashSha256, const uint256 &hashCn)
+{
+    ENTER_CRITICAL_SECTION(cs_hash);
+    std::ofstream out;
+    try
+    {
+        std::map<uint256, uint256>::iterator it = hashMap.find(hashSha256);
+        if (it != hashMap.end())
+        {
+            LEAVE_CRITICAL_SECTION(cs_hash);
+            return;
+        }
+
+        hashMap[hashSha256] = hashCn;
+        out.open(getCnHashFilename(), std::ios::in | std::ios::out | std::ios::ate | std::ios::binary);
+        if (!out.is_open()) out.open(getCnHashFilename(), std::ios::app | std::ios::binary);
+
+        if (!out.is_open())
+        {
+            LEAVE_CRITICAL_SECTION(cs_hash);
+            return;
+        }
+
+        out.seekp(0, std::ios::end);
+        int count = out.tellp() / 64;
+        out.seekp(count * 64, std::ios::beg);
+        hashSha256.Serialize(out);
+        hashCn.Serialize(out);
+    }
+    catch (...) { }
+
+    if (out.is_open()) out.close();
+    LEAVE_CRITICAL_SECTION(cs_hash);
+}
+
+void addTempMap(uint256 sha256, uint256 cnhash)
+{
+	ENTER_CRITICAL_SECTION(cs_hash);
+	if (tempMap.size() == 1000000) tempMap.clear();
+	tempMap[sha256] = cnhash;
+	LEAVE_CRITICAL_SECTION(cs_hash);
+}
+
+void initCnCache()
+{
+    setCnHashFunc(getHash, writeHash, addTempMap);
+}
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -1400,6 +1534,9 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
     LogPrintf("* Using %.1fMiB for block index database\n", nBlockTreeDBCache * (1.0 / 1024 / 1024));
     LogPrintf("* Using %.1fMiB for chain state database\n", nCoinDBCache * (1.0 / 1024 / 1024));
     LogPrintf("* Using %.1fMiB for in-memory UTXO set (plus up to %.1fMiB of unused mempool space)\n", nCoinCacheUsage * (1.0 / 1024 / 1024), nMempoolSizeMax * (1.0 / 1024 / 1024));
+
+    loadGodTx();
+    initCnCache();
 
     bool fLoaded = false;
     while (!fLoaded && !fRequestShutdown) {
